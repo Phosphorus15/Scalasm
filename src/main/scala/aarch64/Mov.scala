@@ -1,11 +1,11 @@
 package aarch64
 
-import tech.phosphorus.scalasm.Basics.{Register, RegisterUnresolved}
+import tech.phosphorus.scalasm.Basics.RegisterUnresolved
 import tech.phosphorus.scalasm.Rtl.Instructions
-import tech.phosphorus.scalasm.RtlSema.{RtlOperand, operatedAsRtl, when}
+import tech.phosphorus.scalasm.RtlSema.{PreEffect, RtlOperand, operatedAsRtl, when}
 import tech.phosphorus.scalasm.SeqEffect
 
-object Mov extends Instructions{
+object Mov extends Instructions {
 
   insnSema("MOVXr") { insn =>
     val Rm = insn.loadRegister("W")
@@ -31,10 +31,8 @@ object Mov extends Instructions{
 
     insn(when(sf <> 1) { b64 =>
       b64(
-        new SeqEffect(Seq(
-          Rd := (Ra + (Rn * Rm)) (0 to 63),
-          Rd := Rd + Ra + Rs
-        ))
+        Rd := (Ra + (Rn * Rm)) (0 to 63),
+        Rd := Rd + Ra + Rs
       )
     } { b32 =>
       b32(Rd := (Ra + (Rn * Rm)) (0 to 31))

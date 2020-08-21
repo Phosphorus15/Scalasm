@@ -18,6 +18,18 @@ object RtlSema {
   implicit def intAsImmediate(imm: Int): RtlOperand =
     new RtlOperand(Value(Bitv(BitVector.fromInt(imm))))
 
+  implicit class PreEffect[+T <: Effect](val effect: T) extends AnyVal {
+
+    def andThen(next: Effect): Effect = effect match {
+      case seq: SeqEffect =>
+        new SeqEffect(seq.effects concat Seq(next))
+      case _ => new SeqEffect(Seq(effect, next))
+    }
+
+    def >>=(next: Effect): Effect = andThen(effect)
+
+  }
+
   implicit class RtlOperand(val operand: Operand) extends AnyVal {
 
     def :=(rtlOperand: RtlOperand) = new MovEffect(operand, rtlOperand.operand)
@@ -44,8 +56,8 @@ object RtlSema {
 
     val effects: mutable.ArrayDeque[Effect] = mutable.ArrayDeque()
 
-    def apply(effect: Effect): Unit = {
-      effects.addOne(effect)
+    def apply(effect: Effect*): Unit = {
+      effects.addAll(effect)
     }
 
     def yieldSelf[T >: InstructionEffectCollector](eval: T => Unit): InstructionEffectCollector = {
